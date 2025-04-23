@@ -3,7 +3,6 @@ import SimpleCertificate from './templates/CertificateTemplate';
 
 const SimpleCanvas = () => {
   useEffect(() => {
-    console.log('Simple Canvas component mounted');
   }, []);
 
   return (

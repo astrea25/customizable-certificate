@@ -9,17 +9,12 @@ const SimpleCertificateElement = ({ element }) => {
 
   // Log the element position for debugging
   useEffect(() => {
-    console.log(`Element ${element.id} position:`, element.position);
     
     // Get the actual DOM position after rendering
     setTimeout(() => {
       if (elementRef.current) {
         const rect = elementRef.current.getBoundingClientRect();
         const paperRect = document.querySelector('.certificate-paper').getBoundingClientRect();
-        console.log(`Element ${element.id} actual DOM position:`, {
-          left: rect.left - paperRect.left,
-          top: rect.top - paperRect.top
-        });
       }
     }, 100);
   }, [element.id, element.position]);
