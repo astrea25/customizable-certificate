@@ -28,7 +28,7 @@ const ImageBasedCertificate = () => {
 
             <p className="text-center text-xl mb-10 max-w-4xl text-black">
               This certificate is given for their achievement in the field of
-              education and proves that she is competent in her field.
+              education and proves that they are competent in their field.
             </p>
           </div>
 
