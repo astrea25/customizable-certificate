@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useCertificate } from '../../context/CertificateContext';
 
 const SimpleCertificateElement = ({ element }) => {
-  const { updateElement } = useCertificate();
+  const { updateElement, removeElement } = useCertificate();
   const [isDragging, setIsDragging] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState(element.content);
@@ -214,15 +214,32 @@ const SimpleCertificateElement = ({ element }) => {
   };
 
   return (
-    <div
-      ref={elementRef}
-      style={style}
-      onMouseDown={handleMouseDown}
-      onDoubleClick={handleDoubleClick}
-      className="draggable-element"
-      data-element-id={element.id}
-    >
-      {renderElement()}
+    <div className="relative">
+      <div
+        ref={elementRef}
+        style={style}
+        onMouseDown={handleMouseDown}
+        onDoubleClick={handleDoubleClick}
+        className="draggable-element"
+        data-element-id={element.id}
+      >
+        {renderElement()}
+      </div>
+
+      {/* Always visible delete button when not editing or dragging */}
+      {!isEditing && !isDragging && (
+        <button
+          type="button"
+          onClick={() => {
+            removeElement(element.id);
+          }}
+          className="absolute -top-3 -right-3 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center
+                   hover:bg-red-600 focus:outline-none shadow-md z-50 text-lg font-bold"
+          title="Delete element"
+        >
+          ×
+        </button>
+      )}
     </div>
   );
 };
