@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import SimpleCertificate from './templates/SimpleCertificate';
+import SimpleCertificate from './templates/CertificateTemplate';
 
 const SimpleCanvas = () => {
   useEffect(() => {

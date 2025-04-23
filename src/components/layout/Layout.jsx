@@ -1,127 +1,78 @@
-import React, { useEffect, useState } from 'react';
-import { DndContext, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
+import React, { useState, useEffect } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import Header from './Header';
-import Sidebar from '../sidebar/Sidebar';
-import Canvas from '../certificate/Canvas';
-import DragOverlay from '../dnd/DragOverlay';
+import Sidebar from '../sidebar/SimpleSidebar';
+import Canvas from '../certificate/SimpleCanvas';
 import { useCertificate } from '../../context/CertificateContext';
-import { restrictToWindowEdges } from '@dnd-kit/modifiers';
 
-const Layout = ({ children }) => {
-  const { addElement, updateElement } = useCertificate();
-  const [activeId, setActiveId] = useState(null);
-  const [activeData, setActiveData] = useState(null);
+const SimpleLayout = ({ children }) => {
+  const { addElement } = useCertificate();
+  const [draggedItem, setDraggedItem] = useState(null);
 
-  useEffect(() => {
-    // Component mounted
-  }, []);
-
-  const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: {
-        distance: 5,
-      },
-    })
-  );
-
-  const handleDragStart = (event) => {
-    setActiveId(event.active.id);
-    setActiveData(event.active.data.current);
+  // Handle when an item is dragged from the sidebar
+  const handleDragStart = (item) => {
+    setDraggedItem(item);
   };
 
-  const handleDragEnd = (event) => {
-    const { active, over, activatorEvent } = event;
+  // Handle when an item is dropped on the canvas
+  const handleDrop = (event) => {
+    if (!draggedItem) return;
 
-    // Only proceed if we're dropping over the certificate canvas
-    if (!over || over.id !== 'certificate-canvas') {
-      setActiveId(null);
-      setActiveData(null);
-      return;
-    }
+    // Get the canvas element
+    const canvas = document.querySelector('.certificate-paper');
+    if (!canvas) return;
 
-    // Get mouse position
-    const mouseX = activatorEvent.clientX;
-    const mouseY = activatorEvent.clientY;
+    const canvasRect = canvas.getBoundingClientRect();
 
-    // Get the paper element's bounding box (this is our actual canvas)
-    const paper = document.querySelector('.certificate-paper');
-    if (!paper) return;
+    // Calculate position relative to the canvas
+    const x = event.clientX - canvasRect.left;
+    const y = event.clientY - canvasRect.top;
 
-    const paperRect = paper.getBoundingClientRect();
-
-    // Calculate the position relative to the paper
-    // For now, let's use a fixed position in the center of the certificate
-    const relativeX = paperRect.width / 2;
-    const relativeY = paperRect.height / 2;
-
-    console.log('Drag end calculations:');
-    console.log('- Mouse position:', { mouseX, mouseY });
-    console.log('- Paper rect:', { left: paperRect.left, top: paperRect.top });
-    console.log('- Relative position:', { relativeX, relativeY });
-
-    // Check if this is a canvas element being dragged (already on the canvas)
-    if (active.data.current?.type === 'canvas-element') {
-      const elementId = active.data.current.elementId;
-
-      console.log('Moving existing element:', elementId);
-
-      // Update the element position
-      updateElement(elementId, {
-        position: { x: relativeX, y: relativeY }
-      });
-    }
-    // This is a sidebar element being dragged onto the canvas
-    else {
+    // Only add the element if the drop position is within the canvas
+    if (x >= 0 && x <= canvasRect.width && y >= 0 && y <= canvasRect.height) {
       // Add the element to the certificate
-      const newElementId = uuidv4();
-
-      console.log('Adding new element:', newElementId);
-
       addElement({
-        id: newElementId,
-        type: active.data.current.type,
-        content: active.data.current.content,
-        position: { x: relativeX, y: relativeY },
+        id: uuidv4(),
+        type: draggedItem.type,
+        content: draggedItem.content,
+        position: { x, y },
       });
-
-      // After a short delay, check the actual position of the element
-      setTimeout(() => {
-        const elementNode = document.querySelector(`[data-element-id="${newElementId}"]`);
-        if (elementNode) {
-          const rect = elementNode.getBoundingClientRect();
-          console.log('- Actual element position in DOM:', {
-            left: rect.left - paperRect.left,
-            top: rect.top - paperRect.top
-          });
-        }
-      }, 100);
     }
 
-    setActiveId(null);
-    setActiveData(null);
+    // Reset the dragged item
+    setDraggedItem(null);
   };
+
+  // Add event listeners for drop events
+  useEffect(() => {
+    const canvas = document.querySelector('.certificate-canvas-container');
+    if (!canvas) return;
+
+    const handleDragOver = (event) => {
+      // Prevent default to allow drop
+      event.preventDefault();
+    };
+
+    canvas.addEventListener('dragover', handleDragOver);
+    canvas.addEventListener('drop', handleDrop);
+
+    return () => {
+      canvas.removeEventListener('dragover', handleDragOver);
+      canvas.removeEventListener('drop', handleDrop);
+    };
+  }, [draggedItem]);
 
   return (
-    <DndContext
-      sensors={sensors}
-      onDragStart={handleDragStart}
-      onDragEnd={handleDragEnd}
-      onDragMove={(event) => {}}
-      modifiers={[restrictToWindowEdges]}
-    >
-      <div className="flex flex-col h-screen">
-        <Header />
-        <div className="flex flex-1 overflow-hidden">
-          <Sidebar />
-          <main className="flex-1 overflow-auto">
-            {children || <Canvas />}
-          </main>
-        </div>
-        <DragOverlay activeId={activeId} activeData={activeData} />
+    <div className="flex flex-col h-screen">
+      <Header />
+      <div className="flex flex-1 overflow-hidden">
+        <Sidebar onDragStart={handleDragStart} />
+        <main className="flex-1 overflow-auto">
+          {children || <Canvas />}
+        </main>
       </div>
-    </DndContext>
+    </div>
   );
 };
 
-export default Layout;
+export default SimpleLayout;

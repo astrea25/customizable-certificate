@@ -1,5 +1,5 @@
 import './App.css'
-import SimpleLayout from './components/layout/SimpleLayout'
+import SimpleLayout from './components/layout/Layout'
 import { CertificateProvider } from './context/CertificateContext'
 
 function App() {

@@ -1,21 +1,89 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useCertificate } from '../../context/CertificateContext';
 
-const CertificateElement = ({ element }) => {
+const SimpleCertificateElement = ({ element }) => {
   const { updateElement, removeElement } = useCertificate();
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const elementRef = useRef(null);
 
+  // Log the element position for debugging
   useEffect(() => {
-    console.log(`Element rendered: ${element.id}`, element);
-  }, [element]);
+    console.log(`Element ${element.id} position:`, element.position);
+    
+    // Get the actual DOM position after rendering
+    setTimeout(() => {
+      if (elementRef.current) {
+        const rect = elementRef.current.getBoundingClientRect();
+        const paperRect = document.querySelector('.certificate-paper').getBoundingClientRect();
+        console.log(`Element ${element.id} actual DOM position:`, {
+          left: rect.left - paperRect.left,
+          top: rect.top - paperRect.top
+        });
+      }
+    }, 100);
+  }, [element.id, element.position]);
+
+  const handleMouseDown = (e) => {
+    // Only handle left mouse button
+    if (e.button !== 0) return;
+    
+    setIsDragging(true);
+    
+    // Calculate the offset between mouse position and element position
+    const rect = elementRef.current.getBoundingClientRect();
+    setDragOffset({
+      x: e.clientX - rect.left,
+      y: e.clientY - rect.top
+    });
+    
+    // Prevent text selection during drag
+    e.preventDefault();
+  };
+
+  const handleMouseMove = (e) => {
+    if (!isDragging) return;
+    
+    // Get the paper element's bounding box
+    const paperRect = document.querySelector('.certificate-paper').getBoundingClientRect();
+    
+    // Calculate new position relative to the paper
+    const newX = e.clientX - paperRect.left - dragOffset.x;
+    const newY = e.clientY - paperRect.top - dragOffset.y;
+    
+    // Update the element position
+    updateElement(element.id, {
+      position: { x: newX, y: newY }
+    });
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+  };
+
+  // Add global mouse move and mouse up event listeners
+  useEffect(() => {
+    if (isDragging) {
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+    } else {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    }
+    
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isDragging, dragOffset]);
 
   const style = {
     position: 'absolute',
     left: `${element.position.x}px`,
     top: `${element.position.y}px`,
-    cursor: 'move',
-    zIndex: 20,
-    pointerEvents: 'auto', // Enable pointer events for the dragged elements
+    cursor: isDragging ? 'grabbing' : 'grab',
+    zIndex: isDragging ? 1000 : 20,
+    userSelect: 'none'
   };
 
   const renderElement = () => {
@@ -61,12 +129,13 @@ const CertificateElement = ({ element }) => {
     <div
       ref={elementRef}
       style={style}
-      className="draggable-element absolute"
-      onDoubleClick={() => console.log('Double clicked element:', element)}
+      onMouseDown={handleMouseDown}
+      className="draggable-element"
+      data-element-id={element.id}
     >
       {renderElement()}
     </div>
   );
 };
 
-export default CertificateElement;
+export default SimpleCertificateElement;

@@ -1,6 +1,6 @@
 import React from 'react';
 import { useCertificate } from '../../../context/CertificateContext';
-import SimpleCertificateElement from '../SimpleCertificateElement';
+import SimpleCertificateElement from '../CertificateElement';
 
 const SimpleCertificate = () => {
   const { elements } = useCertificate();
