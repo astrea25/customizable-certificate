@@ -1,9 +1,12 @@
 import './App.css'
-import Layout from './components/layout/Layout'
+import SimpleLayout from './components/layout/SimpleLayout'
+import { CertificateProvider } from './context/CertificateContext'
 
 function App() {
   return (
-    <Layout />
+    <CertificateProvider>
+      <SimpleLayout />
+    </CertificateProvider>
   )
 }
 

@@ -1,19 +1,20 @@
 import React from 'react';
 import { useCertificate } from '../../../context/CertificateContext';
-import DraggableCertificateElement from '../DraggableCertificateElement';
-import DroppableCanvas from '../DroppableCanvas';
+import SimpleCertificateElement from '../SimpleCertificateElement';
 
-const ImageBasedCertificate = () => {
+const SimpleCertificate = () => {
   const { elements } = useCertificate();
 
   return (
-    <DroppableCanvas>
+    <div className="relative w-full h-full">
+      {/* Background image */}
       <img
         src="/src/components/layout/background.png"
         alt="Certificate Background"
         className="absolute inset-0 w-full h-full object-cover"
       />
 
+      {/* Certificate paper */}
       <div className="absolute inset-6 rounded-4xl bg-white shadow-lg border border-gray-200 certificate-paper">
         <div className="absolute rounded-4xl inset-3 border border-black z-1"></div>
         <div className="w-full h-full flex flex-col items-center justify-between p-12">
@@ -60,7 +61,7 @@ const ImageBasedCertificate = () => {
       {/* Render dragged elements */}
       <div className="absolute inset-0 z-20" style={{ overflow: 'visible' }}>
         {elements.map((element) => (
-          <DraggableCertificateElement key={element.id} element={element} />
+          <SimpleCertificateElement key={element.id} element={element} />
         ))}
       </div>
 
@@ -69,8 +70,8 @@ const ImageBasedCertificate = () => {
         alt="Certificate Foreground"
         className="absolute inset-0 w-full h-full object-cover pointer-events-none z-10"
       />
-    </DroppableCanvas>
+    </div>
   );
 };
 
-export default ImageBasedCertificate;
+export default SimpleCertificate;
