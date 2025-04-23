@@ -2,50 +2,56 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useCertificate } from '../../context/CertificateContext';
 
 const SimpleCertificateElement = ({ element }) => {
-  const { updateElement, removeElement } = useCertificate();
+  const { updateElement } = useCertificate();
   const [isDragging, setIsDragging] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editContent, setEditContent] = useState(element.content);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const elementRef = useRef(null);
+  const inputRef = useRef(null);
 
-  // Log the element position for debugging
+  // Update editContent when element.content changes
   useEffect(() => {
-    
-    // Get the actual DOM position after rendering
-    setTimeout(() => {
-      if (elementRef.current) {
-        const rect = elementRef.current.getBoundingClientRect();
-        const paperRect = document.querySelector('.certificate-paper').getBoundingClientRect();
-      }
-    }, 100);
-  }, [element.id, element.position]);
+    setEditContent(element.content);
+  }, [element.content]);
+
+  // Focus the input when entering edit mode
+  useEffect(() => {
+    if (isEditing && inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, [isEditing]);
 
   const handleMouseDown = (e) => {
+    // Don't initiate drag if we're editing
+    if (isEditing) return;
+
     // Only handle left mouse button
     if (e.button !== 0) return;
-    
+
     setIsDragging(true);
-    
+
     // Calculate the offset between mouse position and element position
     const rect = elementRef.current.getBoundingClientRect();
     setDragOffset({
       x: e.clientX - rect.left,
       y: e.clientY - rect.top
     });
-    
+
     // Prevent text selection during drag
     e.preventDefault();
   };
 
   const handleMouseMove = (e) => {
     if (!isDragging) return;
-    
+
     // Get the paper element's bounding box
     const paperRect = document.querySelector('.certificate-paper').getBoundingClientRect();
-    
+
     // Calculate new position relative to the paper
     const newX = e.clientX - paperRect.left - dragOffset.x;
     const newY = e.clientY - paperRect.top - dragOffset.y;
-    
+
     // Update the element position
     updateElement(element.id, {
       position: { x: newX, y: newY }
@@ -54,6 +60,36 @@ const SimpleCertificateElement = ({ element }) => {
 
   const handleMouseUp = () => {
     setIsDragging(false);
+  };
+
+  // Handle double click to enter edit mode
+  const handleDoubleClick = (e) => {
+    e.stopPropagation();
+    setIsEditing(true);
+  };
+
+  // Handle input change
+  const handleInputChange = (e) => {
+    setEditContent(e.target.value);
+  };
+
+  // Handle key press in the input
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      // Save changes and exit edit mode
+      updateElement(element.id, { content: editContent });
+      setIsEditing(false);
+    } else if (e.key === 'Escape') {
+      // Cancel editing and revert to original content
+      setEditContent(element.content);
+      setIsEditing(false);
+    }
+  };
+
+  // Handle blur event to save changes when clicking outside
+  const handleBlur = () => {
+    updateElement(element.id, { content: editContent });
+    setIsEditing(false);
   };
 
   // Add global mouse move and mouse up event listeners
@@ -65,7 +101,7 @@ const SimpleCertificateElement = ({ element }) => {
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
     }
-    
+
     return () => {
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
@@ -76,12 +112,69 @@ const SimpleCertificateElement = ({ element }) => {
     position: 'absolute',
     left: `${element.position.x}px`,
     top: `${element.position.y}px`,
-    cursor: isDragging ? 'grabbing' : 'grab',
-    zIndex: isDragging ? 1000 : 20,
-    userSelect: 'none'
+    cursor: isDragging ? 'grabbing' : (isEditing ? 'text' : 'grab'),
+    zIndex: isDragging || isEditing ? 1000 : 20,
+    userSelect: isEditing ? 'text' : 'none',
+    minWidth: '50px',
+    minHeight: '20px'
+  };
+
+  // Get the appropriate class based on element type
+  const getElementClass = (type) => {
+    switch (type) {
+      case 'h1':
+        return "text-8xl font-black tracking-wider text-black";
+      case 'h2':
+        return "text-6xl font-bold tracking-wider text-black";
+      case 'h3':
+        return "text-4xl font-bold tracking-wider text-black";
+      case 'h4':
+        return "text-3xl font-bold tracking-wider text-black";
+      case 'h5':
+        return "text-2xl font-bold tracking-wider text-black";
+      case 'h6':
+        return "text-xl font-bold tracking-wider text-black";
+      case 'p-regular':
+        return "text-base text-black";
+      case 'p-small':
+        return "text-sm text-black";
+      case 'p-xs':
+        return "text-xs text-black";
+      case 'p-large':
+        return "text-lg text-black";
+      case 'p-xl':
+        return "text-xl text-black";
+      case 'p-bold':
+        return "font-bold text-black";
+      case 'p-italic':
+        return "italic text-black";
+      case 'p-underline':
+        return "underline text-black";
+      case 'p-strike':
+        return "line-through text-black";
+      case 'p-color':
+        return "text-blue-600";
+      default:
+        return "text-black";
+    }
   };
 
   const renderElement = () => {
+    if (isEditing) {
+      return (
+        <input
+          ref={inputRef}
+          type="text"
+          value={editContent}
+          onChange={handleInputChange}
+          onKeyDown={handleKeyDown}
+          onBlur={handleBlur}
+          className={`bg-transparent outline-none border border-blue-400 px-1 w-full ${getElementClass(element.type)}`}
+          style={{ minWidth: '100px' }}
+        />
+      );
+    }
+
     switch (element.type) {
       case 'h1':
         return <h1 className="text-8xl font-black tracking-wider text-black">{element.content}</h1>;
@@ -125,6 +218,7 @@ const SimpleCertificateElement = ({ element }) => {
       ref={elementRef}
       style={style}
       onMouseDown={handleMouseDown}
+      onDoubleClick={handleDoubleClick}
       className="draggable-element"
       data-element-id={element.id}
     >
