@@ -1,6 +1,6 @@
 import React from 'react';
 import { useCertificate } from '../../../context/CertificateContext';
-import SimpleCertificateElement from '../CertificateElement';
+import CertificateElements from '../CertificateElement';
 
 const SimpleCertificate = () => {
   const { elements } = useCertificate();
@@ -22,9 +22,9 @@ const SimpleCertificate = () => {
             <h1 className="text-8xl font-black tracking-wider text-center mb-4 text-black">CERTIFICATE</h1>
 
             <div className="flex items-center justify-center w-full mb-12">
-              <div className="h-px bg-black w-40"></div>
-              <h2 className="text-3xl font-bold tracking-widest mx-6 text-black">OF APPRECIATION</h2>
-              <div className="h-px bg-black w-40"></div>
+              {/* <div className="h-px bg-black w-40"></div> */}
+              <div className="w-40 h-10 mx-6"></div>
+              {/* <div className="h-px bg-black w-40"></div> */}
             </div>
 
             <p className="text-3xl uppercase tracking-wider mb-8 text-black">This certificate is proudly presented to</p>
@@ -61,7 +61,7 @@ const SimpleCertificate = () => {
       {/* Render dragged elements */}
       <div className="absolute inset-0 z-20" style={{ overflow: 'visible' }}>
         {elements.map((element) => (
-          <SimpleCertificateElement key={element.id} element={element} />
+          <CertificateElements key={element.id} element={element} />
         ))}
       </div>
 

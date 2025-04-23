@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import Header from './Header';
-import Sidebar from '../sidebar/SimpleSidebar';
+import Sidebar from '../sidebar/Sidebar';
 import Canvas from '../certificate/Canvas';
 import { useCertificate } from '../../context/CertificateContext';
 
