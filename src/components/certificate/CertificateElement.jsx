@@ -5,6 +5,7 @@ const SimpleCertificateElement = ({ element }) => {
   const { updateElement, removeElement } = useCertificate();
   const [isDragging, setIsDragging] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+  const [isSelected, setIsSelected] = useState(false);
   const [editContent, setEditContent] = useState(element.content);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const elementRef = useRef(null);
@@ -29,6 +30,9 @@ const SimpleCertificateElement = ({ element }) => {
     // Only handle left mouse button
     if (e.button !== 0) return;
 
+    // Set this element as selected
+    setIsSelected(true);
+
     setIsDragging(true);
 
     // Calculate the offset between mouse position and element position
@@ -41,6 +45,27 @@ const SimpleCertificateElement = ({ element }) => {
     // Prevent text selection during drag
     e.preventDefault();
   };
+
+  // Handle click outside to deselect
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      // Check if the click is on a delete button (has a parent with the delete-button class)
+      const isDeleteButtonClick = e.target.closest('.delete-button');
+
+      if (isDeleteButtonClick) {
+        return;
+      }
+
+      if (elementRef.current && !elementRef.current.contains(e.target)) {
+        setIsSelected(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [element.id]);
 
   const handleMouseMove = (e) => {
     if (!isDragging) return;
@@ -60,12 +85,15 @@ const SimpleCertificateElement = ({ element }) => {
 
   const handleMouseUp = () => {
     setIsDragging(false);
+    // Keep the element selected after dragging
+    setIsSelected(true);
   };
 
   // Handle double click to enter edit mode
   const handleDoubleClick = (e) => {
     e.stopPropagation();
     setIsEditing(true);
+    setIsSelected(true);
   };
 
   // Handle input change
@@ -79,10 +107,14 @@ const SimpleCertificateElement = ({ element }) => {
       // Save changes and exit edit mode
       updateElement(element.id, { content: editContent });
       setIsEditing(false);
+      // Keep the element selected after editing
+      setIsSelected(true);
     } else if (e.key === 'Escape') {
       // Cancel editing and revert to original content
       setEditContent(element.content);
       setIsEditing(false);
+      // Keep the element selected after canceling edit
+      setIsSelected(true);
     }
   };
 
@@ -90,6 +122,8 @@ const SimpleCertificateElement = ({ element }) => {
   const handleBlur = () => {
     updateElement(element.id, { content: editContent });
     setIsEditing(false);
+    // Keep the element selected after editing
+    setIsSelected(true);
   };
 
   // Add global mouse move and mouse up event listeners
@@ -220,26 +254,40 @@ const SimpleCertificateElement = ({ element }) => {
         style={style}
         onMouseDown={handleMouseDown}
         onDoubleClick={handleDoubleClick}
-        className="draggable-element"
+        className={`draggable-element ${isSelected ? 'ring-2 ring-blue-400' : ''}`}
         data-element-id={element.id}
       >
         {renderElement()}
-      </div>
 
-      {/* Always visible delete button when not editing or dragging */}
-      {!isEditing && !isDragging && (
-        <button
-          type="button"
-          onClick={() => {
-            removeElement(element.id);
-          }}
-          className="absolute -top-3 -right-3 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center
-                   hover:bg-red-600 focus:outline-none shadow-md z-50 text-lg font-bold"
-          title="Delete element"
-        >
-          ×
-        </button>
-      )}
+        {/* Delete button positioned on the corner of the component itself, only visible when selected */}
+        {isSelected && !isEditing && !isDragging && (
+          <button
+            type="button"
+            onMouseDown={(e) => {
+              e.stopPropagation();
+            }}
+            onClick={(e) => {
+              // Make sure to stop propagation and prevent default
+              e.stopPropagation();
+              e.preventDefault();
+
+              // Try with a small delay to ensure event handling is complete
+              setTimeout(() => {
+                try {
+                  removeElement(element.id);
+                } catch (error) {
+                  // Silent error handling
+                }
+              }, 0);
+            }}
+            className="delete-button absolute top-0 right-0 bg-red-500 text-white rounded-tr-md rounded-bl-md w-6 h-6 flex items-center justify-center
+                     hover:bg-red-600 focus:outline-none shadow-md z-50 text-lg font-bold"
+            title="Delete element"
+          >
+            ×
+          </button>
+        )}
+      </div>
     </div>
   );
 };

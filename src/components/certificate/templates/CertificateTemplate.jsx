@@ -61,7 +61,10 @@ const SimpleCertificate = () => {
       {/* Render dragged elements */}
       <div className="absolute inset-0 z-20" style={{ overflow: 'visible' }}>
         {elements.map((element) => (
-          <CertificateElements key={element.id} element={element} />
+          <CertificateElements
+            key={element.id}
+            element={element}
+          />
         ))}
       </div>
 

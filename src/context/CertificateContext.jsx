@@ -18,7 +18,17 @@ export const CertificateProvider = ({ children }) => {
   };
 
   const removeElement = (id) => {
-    setElements((prev) => prev.filter((element) => element.id !== id));
+    // Check if the element with this ID exists
+    const elementExists = elements.some(element => element.id === id);
+
+    if (!elementExists) {
+      return;
+    }
+
+    setElements((prev) => {
+      const newElements = prev.filter((element) => element.id !== id);
+      return newElements;
+    });
   };
 
   return (
