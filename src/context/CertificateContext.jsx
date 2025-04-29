@@ -6,6 +6,7 @@ export const useCertificate = () => useContext(CertificateContext);
 
 export const CertificateProvider = ({ children }) => {
   const [elements, setElements] = useState([]);
+  const [background, setBackground] = useState(null);
 
   const addElement = (element) => {
     setElements((prev) => [...prev, element]);
@@ -31,13 +32,19 @@ export const CertificateProvider = ({ children }) => {
     });
   };
 
+  const setBackgroundImage = (imageUrl) => {
+    setBackground(imageUrl);
+  };
+
   return (
     <CertificateContext.Provider
       value={{
         elements,
+        background,
         addElement,
         updateElement,
         removeElement,
+        setBackgroundImage,
       }}
     >
       {children}

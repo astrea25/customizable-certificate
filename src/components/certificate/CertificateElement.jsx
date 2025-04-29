@@ -11,12 +11,10 @@ const SimpleCertificateElement = ({ element }) => {
   const elementRef = useRef(null);
   const inputRef = useRef(null);
 
-  // Update editContent when element.content changes
   useEffect(() => {
     setEditContent(element.content);
   }, [element.content]);
 
-  // Focus the input when entering edit mode
   useEffect(() => {
     if (isEditing && inputRef.current) {
       inputRef.current.focus();
@@ -24,32 +22,25 @@ const SimpleCertificateElement = ({ element }) => {
   }, [isEditing]);
 
   const handleMouseDown = (e) => {
-    // Don't initiate drag if we're editing
     if (isEditing) return;
 
-    // Only handle left mouse button
     if (e.button !== 0) return;
 
-    // Set this element as selected
     setIsSelected(true);
 
     setIsDragging(true);
 
-    // Calculate the offset between mouse position and element position
     const rect = elementRef.current.getBoundingClientRect();
     setDragOffset({
       x: e.clientX - rect.left,
       y: e.clientY - rect.top
     });
 
-    // Prevent text selection during drag
     e.preventDefault();
   };
 
-  // Handle click outside to deselect
   useEffect(() => {
     const handleClickOutside = (e) => {
-      // Check if the click is on a delete button (has a parent with the delete-button class)
       const isDeleteButtonClick = e.target.closest('.delete-button');
 
       if (isDeleteButtonClick) {
@@ -70,14 +61,11 @@ const SimpleCertificateElement = ({ element }) => {
   const handleMouseMove = (e) => {
     if (!isDragging) return;
 
-    // Get the paper element's bounding box
-    const paperRect = document.querySelector('.certificate-paper').getBoundingClientRect();
+    const canvasRect = document.querySelector('.certificate-canvas-container').getBoundingClientRect();
 
-    // Calculate new position relative to the paper
-    const newX = e.clientX - paperRect.left - dragOffset.x;
-    const newY = e.clientY - paperRect.top - dragOffset.y;
+    const newX = e.clientX - canvasRect.left - dragOffset.x;
+    const newY = e.clientY - canvasRect.top - dragOffset.y;
 
-    // Update the element position
     updateElement(element.id, {
       position: { x: newX, y: newY }
     });
@@ -85,44 +73,34 @@ const SimpleCertificateElement = ({ element }) => {
 
   const handleMouseUp = () => {
     setIsDragging(false);
-    // Keep the element selected after dragging
     setIsSelected(true);
   };
 
-  // Handle double click to enter edit mode
   const handleDoubleClick = (e) => {
     e.stopPropagation();
     setIsEditing(true);
     setIsSelected(true);
   };
 
-  // Handle input change
   const handleInputChange = (e) => {
     setEditContent(e.target.value);
   };
 
-  // Handle key press in the input
   const handleKeyDown = (e) => {
     if (e.key === 'Enter') {
-      // Save changes and exit edit mode
       updateElement(element.id, { content: editContent });
       setIsEditing(false);
-      // Keep the element selected after editing
       setIsSelected(true);
     } else if (e.key === 'Escape') {
-      // Cancel editing and revert to original content
       setEditContent(element.content);
       setIsEditing(false);
-      // Keep the element selected after canceling edit
       setIsSelected(true);
     }
   };
 
-  // Handle blur event to save changes when clicking outside
   const handleBlur = () => {
     updateElement(element.id, { content: editContent });
     setIsEditing(false);
-    // Keep the element selected after editing
     setIsSelected(true);
   };
 
@@ -153,7 +131,7 @@ const SimpleCertificateElement = ({ element }) => {
     minHeight: '20px'
   };
 
-  // Get the appropriate class based on element type
+  // Get the appropriate class based on element type for the input field
   const getElementClass = (type) => {
     switch (type) {
       case 'h1':
@@ -259,7 +237,6 @@ const SimpleCertificateElement = ({ element }) => {
       >
         {renderElement()}
 
-        {/* Delete button positioned on the corner of the component itself, only visible when selected */}
         {isSelected && !isEditing && !isDragging && (
           <button
             type="button"
@@ -267,16 +244,13 @@ const SimpleCertificateElement = ({ element }) => {
               e.stopPropagation();
             }}
             onClick={(e) => {
-              // Make sure to stop propagation and prevent default
               e.stopPropagation();
               e.preventDefault();
 
-              // Try with a small delay to ensure event handling is complete
               setTimeout(() => {
                 try {
                   removeElement(element.id);
                 } catch (error) {
-                  // Silent error handling
                 }
               }, 0);
             }}
