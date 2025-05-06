@@ -25,14 +25,47 @@ const PDFBackground = ({ pdfUrl }) => {
       // Set the worker source
       pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.4.120/build/pdf.worker.min.js';
 
-      // Load the PDF document
-      const loadingTask = pdfjsLib.getDocument(pdfUrl);
-      loadingTask.promise
-        .then(pdf => {
+      // Determine if this is a URL or a Blob URL
+      const isExternalUrl = pdfUrl.startsWith('http') && !pdfUrl.startsWith('blob:');
+
+      // For external URLs, we need to handle CORS
+      const loadPdf = async () => {
+        try {
+          let pdfSource = pdfUrl;
+
+          // If it's an external URL, we might need to proxy it or fetch it first
+          if (isExternalUrl) {
+            try {
+              // For demonstration purposes, we'll try to load it directly
+              // In a real implementation, you might want to proxy this request through your backend
+              // to avoid CORS issues
+              const response = await fetch(pdfUrl, {
+                mode: 'cors',
+                headers: {
+                  'Access-Control-Allow-Origin': '*'
+                }
+              });
+
+              if (!response.ok) {
+                throw new Error(`Failed to fetch PDF: ${response.status} ${response.statusText}`);
+              }
+
+              const arrayBuffer = await response.arrayBuffer();
+              pdfSource = { data: new Uint8Array(arrayBuffer) };
+            } catch (fetchError) {
+              console.warn('Direct fetch failed, falling back to direct loading:', fetchError);
+              // Fall back to direct loading (might fail due to CORS)
+              pdfSource = pdfUrl;
+            }
+          }
+
+          // Load the PDF document
+          const loadingTask = pdfjsLib.getDocument(pdfSource);
+          const pdf = await loadingTask.promise;
+
           // Get the first page
-          return pdf.getPage(1);
-        })
-        .then(page => {
+          const page = await pdf.getPage(1);
+
           // Set the scale to fit the canvas
           const viewport = page.getViewport({ scale: 1.0 });
 
@@ -50,18 +83,20 @@ const PDFBackground = ({ pdfUrl }) => {
             viewport: viewport
           };
 
-          return page.render(renderContext).promise.then(() => {
-            // Convert the canvas to an image
-            const imageUrl = canvas.toDataURL('image/png');
-            setPdfImage(imageUrl);
-            setIsLoading(false);
-          });
-        })
-        .catch(err => {
-          console.error('Error rendering PDF:', err);
-          setError('Failed to render PDF. Please try a different file.');
+          await page.render(renderContext).promise;
+
+          // Convert the canvas to an image
+          const imageUrl = canvas.toDataURL('image/png');
+          setPdfImage(imageUrl);
           setIsLoading(false);
-        });
+        } catch (err) {
+          console.error('Error rendering PDF:', err);
+          setError(`Failed to render PDF: ${err.message || 'Unknown error'}`);
+          setIsLoading(false);
+        }
+      };
+
+      loadPdf();
     };
 
     script.onerror = () => {
@@ -84,7 +119,12 @@ const PDFBackground = ({ pdfUrl }) => {
       {isLoading && (
         <div className="absolute inset-0 flex items-center justify-center z-10">
           <div className="text-center py-10 text-blue-600">
-            <div className="animate-pulse">Converting PDF to image...</div>
+            <div className="animate-pulse">
+              {pdfUrl.startsWith('http') && !pdfUrl.startsWith('blob:')
+                ? 'Fetching and converting PDF from URL...'
+                : 'Converting PDF to image...'}
+            </div>
+            <div className="text-sm text-gray-500 mt-2">This may take a moment</div>
           </div>
         </div>
       )}
