@@ -1,18 +1,23 @@
 import React from 'react';
 import { useCertificate } from '../../../context/CertificateContext';
 import CertificateElements from '../CertificateElement';
+import PDFBackground from '../PDFBackground';
 
 const SimpleCertificate = () => {
-  const { elements, background } = useCertificate();
+  const { elements, background, backgroundType } = useCertificate();
 
   return (
     <div className="relative w-full h-full">
       {background ? (
-        <img
-          src={background}
-          alt="Certificate Background"
-          className="absolute inset-0 w-full h-full object-cover"
-        />
+        backgroundType === 'pdf' ? (
+          <PDFBackground pdfUrl={background} />
+        ) : (
+          <img
+            src={background}
+            alt="Certificate Background"
+            className="absolute inset-0 w-full h-full object-cover"
+          />
+        )
       ) : (
         <div className="absolute inset-0 bg-white"></div>
       )}

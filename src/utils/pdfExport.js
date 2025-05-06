@@ -2,12 +2,14 @@ import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 
 const waitForImagesLoaded = async (element) => {
-  const images = Array.from(element.querySelectorAll('img'));
+  // Wait for all images and canvases to load
+  const images = Array.from(element.querySelectorAll('img, canvas'));
+
   return Promise.all(
     images.map(
       (img) =>
         new Promise((resolve) => {
-          if (img.complete) {
+          if (img.tagName.toLowerCase() === 'canvas' || img.complete) {
             resolve();
           } else {
             img.onload = resolve;
@@ -31,6 +33,9 @@ export const exportCertificateAsPDF = async (
   try {
     await waitForImagesLoaded(canvasElement);
 
+    // No special handling needed for PDF backgrounds anymore
+    // Since PDFs are now rendered as images
+
     const canvas = await html2canvas(canvasElement, {
       scale: 2,
       useCORS: true,
@@ -41,6 +46,7 @@ export const exportCertificateAsPDF = async (
       onclone: (clonedDoc) => {
         const clonedElement = clonedDoc.querySelector('.certificate-canvas-container');
         if (clonedElement) {
+          // Make sure all elements are visible
           clonedElement.querySelectorAll('*').forEach((el) => {
             if (el.style.display === 'none') {
               el.style.display = 'block';

@@ -7,6 +7,7 @@ export const useCertificate = () => useContext(CertificateContext);
 export const CertificateProvider = ({ children }) => {
   const [elements, setElements] = useState([]);
   const [background, setBackground] = useState(null);
+  const [backgroundType, setBackgroundType] = useState(null); // 'image' or 'pdf'
 
   const addElement = (element) => {
     setElements((prev) => [...prev, element]);
@@ -32,8 +33,9 @@ export const CertificateProvider = ({ children }) => {
     });
   };
 
-  const setBackgroundImage = (imageUrl) => {
-    setBackground(imageUrl);
+  const setBackgroundImage = (fileUrl, type) => {
+    setBackground(fileUrl);
+    setBackgroundType(type);
   };
 
   return (
@@ -41,6 +43,7 @@ export const CertificateProvider = ({ children }) => {
       value={{
         elements,
         background,
+        backgroundType,
         addElement,
         updateElement,
         removeElement,
